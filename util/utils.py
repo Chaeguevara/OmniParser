@@ -19,16 +19,23 @@ import numpy as np
 from matplotlib import pyplot as plt
 import easyocr
 from paddleocr import PaddleOCR
-reader = easyocr.Reader(['en'])
-paddle_ocr = PaddleOCR(
-    lang='en',  # other lang also available
-    use_angle_cls=False,
-    use_gpu=False,  # using cuda will conflict with pytorch in the same process
-    show_log=False,
-    max_batch_size=1024,
-    use_dilation=True,  # improves accuracy
-    det_db_score_mode='slow',  # improves accuracy
-    rec_batch_num=1024)
+
+# EasyOCR initialization with Korean support
+reader = easyocr.Reader(['en', 'ko'])
+
+# PaddleOCR 3.x API - completely new interface
+# Uses predict() method, returns dict with 'rec_texts', 'rec_scores', 'dt_polys'
+try:
+    paddle_ocr = PaddleOCR(
+        use_doc_orientation_classify=False,
+        use_doc_unwarping=False,
+        use_textline_orientation=False,
+        text_recognition_model_name="korean_PP-OCRv5_mobile_rec"
+    )
+except Exception as e:
+    print(f"Warning: PaddleOCR initialization failed: {e}")
+    print("Falling back to EasyOCR only")
+    paddle_ocr = None
 import time
 import base64
 
@@ -59,12 +66,13 @@ def get_caption_model_processor(model_name, model_name_or_path="Salesforce/blip2
             model_name_or_path, device_map=None, torch_dtype=torch.float16
         ).to(device)
     elif model_name == "florence2":
-        from transformers import AutoProcessor, AutoModelForCausalLM 
+        from transformers import AutoProcessor, AutoModelForCausalLM
         processor = AutoProcessor.from_pretrained("microsoft/Florence-2-base", trust_remote_code=True)
+        # attn_implementation="eager" fixes compatibility with newer transformers versions
         if device == 'cpu':
-            model = AutoModelForCausalLM.from_pretrained(model_name_or_path, torch_dtype=torch.float32, trust_remote_code=True)
+            model = AutoModelForCausalLM.from_pretrained(model_name_or_path, torch_dtype=torch.float32, trust_remote_code=True, attn_implementation="eager")
         else:
-            model = AutoModelForCausalLM.from_pretrained(model_name_or_path, torch_dtype=torch.float16, trust_remote_code=True).to(device)
+            model = AutoModelForCausalLM.from_pretrained(model_name_or_path, torch_dtype=torch.float16, trust_remote_code=True, attn_implementation="eager").to(device)
     return {'model': model.to(device), 'processor': processor}
 
 
@@ -112,7 +120,8 @@ def get_parsed_content_icon(filtered_boxes, starting_idx, image_source, caption_
         else:
             inputs = processor(images=batch, text=[prompt]*len(batch), return_tensors="pt").to(device=device)
         if 'florence' in model.config.name_or_path:
-            generated_ids = model.generate(input_ids=inputs["input_ids"],pixel_values=inputs["pixel_values"],max_new_tokens=20,num_beams=1, do_sample=False)
+            # use_cache=False fixes compatibility with newer transformers versions
+            generated_ids = model.generate(input_ids=inputs["input_ids"],pixel_values=inputs["pixel_values"],max_new_tokens=20,num_beams=1, do_sample=False, use_cache=False)
         else:
             generated_ids = model.generate(**inputs, max_length=100, num_beams=5, no_repeat_ngram_size=2, early_stopping=True, num_return_sequences=1) # temperature=0.01, do_sample=True,
         generated_text = processor.batch_decode(generated_ids, skip_special_tokens=True)
@@ -509,15 +518,39 @@ def check_ocr_box(image_source: Union[str, Image.Image], display_img = True, out
         image_source = image_source.convert('RGB')
     image_np = np.array(image_source)
     w, h = image_source.size
-    if use_paddleocr:
+    if use_paddleocr and paddle_ocr is not None:
         if easyocr_args is None:
             text_threshold = 0.5
         else:
-            text_threshold = easyocr_args['text_threshold']
-        result = paddle_ocr.ocr(image_np, cls=False)[0]
-        coord = [item[0] for item in result if item[1][1] > text_threshold]
-        text = [item[1][0] for item in result if item[1][1] > text_threshold]
-    else:  # EasyOCR
+            text_threshold = easyocr_args.get('text_threshold', 0.5)
+
+        # PaddleOCR 3.x uses predict() and returns dict/object with rec_texts, rec_scores, dt_polys
+        result = paddle_ocr.predict(input=image_np)
+
+        # Handle result format - may be list of dicts or single dict
+        if isinstance(result, list) and len(result) > 0:
+            result = result[0]
+
+        # Extract from result dict/object
+        if result is None or not hasattr(result, '__getitem__'):
+            coord, text = [], []
+        else:
+            # Get the result dict (might be wrapped in 'res' key)
+            res = result.get('res', result) if isinstance(result, dict) else result
+
+            rec_texts = res.get('rec_texts', []) if isinstance(res, dict) else getattr(res, 'rec_texts', [])
+            rec_scores = res.get('rec_scores', []) if isinstance(res, dict) else getattr(res, 'rec_scores', [])
+            dt_polys = res.get('dt_polys', []) if isinstance(res, dict) else getattr(res, 'dt_polys', [])
+
+            # Filter by threshold and build coord/text lists
+            coord, text = [], []
+            for i, (txt, score) in enumerate(zip(rec_texts, rec_scores)):
+                if score > text_threshold and i < len(dt_polys):
+                    # dt_polys are numpy arrays of shape (4, 2) - convert to list format
+                    poly = dt_polys[i].tolist() if hasattr(dt_polys[i], 'tolist') else dt_polys[i]
+                    coord.append(poly)
+                    text.append(txt)
+    else:  # EasyOCR (or fallback if PaddleOCR unavailable)
         if easyocr_args is None:
             easyocr_args = {}
         result = reader.readtext(image_np, **easyocr_args)
