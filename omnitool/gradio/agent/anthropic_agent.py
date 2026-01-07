@@ -41,6 +41,7 @@ class APIProvider(StrEnum):
 SYSTEM_PROMPT = f"""<SYSTEM_CAPABILITY>
 * You are utilizing a Windows system with internet access.
 * The current date is {datetime.today().strftime('%A, %B %d, %Y')}.
+* You have window management capabilities: list_windows, get_active_window, and focus_window actions are available for multi-application workflows.
 </SYSTEM_CAPABILITY>
 """
 

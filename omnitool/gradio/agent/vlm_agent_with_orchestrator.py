@@ -14,6 +14,8 @@ from anthropic.types.beta import BetaMessage, BetaTextBlock, BetaToolUseBlock, B
 
 from agent.llm_utils.oaiclient import run_oai_interleaved
 from agent.llm_utils.groqclient import run_groq_interleaved
+from agent.llm_utils.ollamaclient import run_ollama_interleaved
+from agent.llm_utils.hfclient import run_hf_interleaved
 from agent.llm_utils.utils import is_image_path
 import time
 import re
@@ -194,6 +196,30 @@ class VLMOrchestratedAgent:
             print(f"qwen token usage: {token_usage}")
             self.total_token_usage += token_usage
             self.total_cost += (token_usage * 2.2 / 1000000)  # https://help.aliyun.com/zh/model-studio/getting-started/models?spm=a2c4g.11186623.0.0.74b04823CGnPv7#fe96cfb1a422a
+        elif "ollama" in self.model or self.provider == "ollama":
+            vlm_response, token_usage = run_ollama_interleaved(
+                messages=planner_messages,
+                system=system,
+                model_name=self.model.replace("ollama + ", ""),  # Remove "ollama + " prefix if present
+                api_key=self.api_key,
+                max_tokens=self.max_tokens,
+                temperature=0,
+            )
+            print(f"ollama token usage: {token_usage}")
+            self.total_token_usage += token_usage
+            self.total_cost += 0  # Local inference, no cost
+        elif "huggingface" in self.model or "hf" in self.model or self.provider == "huggingface":
+            vlm_response, token_usage = run_hf_interleaved(
+                messages=planner_messages,
+                system=system,
+                model_name=self.model.replace("huggingface + ", "").replace("hf + ", ""),
+                api_key=self.api_key,
+                max_tokens=self.max_tokens,
+                temperature=0,
+            )
+            print(f"huggingface token usage: {token_usage}")
+            self.total_token_usage += token_usage
+            self.total_cost += 0  # Assume local or free tier
         else:
             raise ValueError(f"Model {self.model} not supported")
         latency_vlm = time.time() - start
@@ -263,6 +289,12 @@ class VLMOrchestratedAgent:
                                         input={'action': vlm_response_json["Next Action"], 'text': vlm_response_json["value"]},
                                         name='computer', type='tool_use')
             response_content.append(sim_content_block)
+        elif vlm_response_json["Next Action"] == "focus_window":
+            # focus_window also uses "value" field for window title
+            sim_content_block = BetaToolUseBlock(id=f'toolu_{uuid.uuid4()}',
+                                        input={'action': vlm_response_json["Next Action"], 'text': vlm_response_json["value"]},
+                                        name='computer', type='tool_use')
+            response_content.append(sim_content_block)
         else:
             sim_content_block = BetaToolUseBlock(id=f'toolu_{uuid.uuid4()}',
                                             input={'action': vlm_response_json["Next Action"]},
@@ -307,8 +339,11 @@ Your available "Next Action" only include:
 - double_click: move mouse to box id and double clicks.
 - hover: move mouse to box id.
 - scroll_up: scrolls the screen up to view previous content.
-- scroll_down: scrolls the screen down, when the desired button is not visible, or you need to see more content. 
+- scroll_down: scrolls the screen down, when the desired button is not visible, or you need to see more content.
 - wait: waits for 1 second for the device to load or respond.
+- list_windows: lists all open windows/applications with their titles.
+- get_active_window: shows which window is currently focused/active.
+- focus_window: brings a specific window to the front by its title (use "value" field for window title).
 
 Based on the visual information from the screenshot image and the detected bounding boxes, please determine the next action, the Box ID you should operate on (if action is one of 'type', 'hover', 'scroll_up', 'scroll_down', 'wait', there should be no Box ID field), and the value (if the action is 'type') in order to complete the task.
 
@@ -346,6 +381,23 @@ Another Example:
 {{
     "Reasoning": "The current screen does not show 'submit' button, I need to scroll down to see if the button is available.",
     "Next Action": "scroll_down",
+}}
+```
+
+Another Example (Multi-window workflow):
+```json
+{{
+    "Reasoning": "I need to copy data from Excel to Chrome. First, let me check which windows are open.",
+    "Next Action": "list_windows"
+}}
+```
+
+Another Example (Window switching):
+```json
+{{
+    "Reasoning": "I can see from the window list that Excel is open but Chrome is currently active. I need to switch to Excel to copy the data.",
+    "Next Action": "focus_window",
+    "value": "Excel"
 }}
 ```
 

@@ -103,6 +103,7 @@ Coordinates: normalized [0-1] in API, pixels internally.
 | Adding providers, tools, models | [`docs/EXTENDING.md`](docs/EXTENDING.md) |
 | Common errors & solutions | [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) |
 | Window management & multi-app automation | [`docs/WINDOW_MANAGEMENT.md`](docs/WINDOW_MANAGEMENT.md) |
+| Local LLM setup (Ollama, Hugging Face) | [`docs/LOCAL_LLM.md`](docs/LOCAL_LLM.md) |
 
 ## Commit Convention
 
