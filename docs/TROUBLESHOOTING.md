@@ -1,5 +1,53 @@
 # Troubleshooting
 
+## PaddleOCR 3.x Compatibility
+
+```
+ValueError: Unknown argument: use_gpu
+TypeError: PaddleOCR.predict() got an unexpected keyword argument 'cls'
+```
+
+**Cause:** PaddleOCR 3.x completely changed its API.
+
+**Fix (already applied in this fork):**
+```python
+# Old API (broken)
+paddle_ocr = PaddleOCR(lang='en', use_gpu=False, cls=False, ...)
+result = paddle_ocr.ocr(image, cls=False)
+
+# New API (3.x)
+paddle_ocr = PaddleOCR(
+    use_doc_orientation_classify=False,
+    use_doc_unwarping=False,
+    use_textline_orientation=False,
+    text_recognition_model_name="korean_PP-OCRv5_mobile_rec"
+)
+result = paddle_ocr.predict(input=image)
+# Output: {'rec_texts': [...], 'rec_scores': [...], 'dt_polys': [...]}
+```
+
+## Florence-2 + Transformers Compatibility
+
+```
+AttributeError: 'Florence2ForConditionalGeneration' object has no attribute '_supports_sdpa'
+AttributeError: 'NoneType' object has no attribute 'shape' (in prepare_inputs_for_generation)
+```
+
+**Cause:** Newer transformers versions have incompatible attention/cache handling.
+
+**Fix (already applied in this fork):**
+```python
+# Add these parameters to from_pretrained():
+model = AutoModelForCausalLM.from_pretrained(
+    model_path,
+    trust_remote_code=True,
+    attn_implementation="eager"  # Fixes SDPA issue
+)
+
+# Add this to generate():
+model.generate(..., use_cache=False)  # Fixes cache issue
+```
+
 ## Model Weights Not Found
 
 ```
