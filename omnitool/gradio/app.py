@@ -311,24 +311,40 @@ with gr.Blocks(theme=gr.themes.Default()) as demo:
                         "omniparser + qwen2.5vl",
                         "claude-3-5-sonnet-20241022",
 
-                        # Ollama - Local models (specify actual model)
-                        "omniparser + ollama/llama3.2-vision:latest",  # 11B - Best quality
-                        "omniparser + ollama/llava:7b",                # 7B - Good balance
-                        "omniparser + ollama/llama3.2-vision:1b",      # 1B - Tiny, fast
-                        "omniparser + ollama/qwen2-vl:7b",             # 7B - Excellent OCR
+                        # Ollama - Text-only models (RECOMMENDED for OmniParser)
+                        "omniparser + ollama/llama3.1:8b-instruct-q4_K_M",  # 8B, 4GB VRAM - Best for limited GPU
+                        "omniparser + ollama/deepseek-r1:7b",               # 7B, 4GB VRAM - Reasoning model
+                        "omniparser + ollama/qwen2.5:7b-instruct",          # 7B, 4GB VRAM - Efficient
 
-                        # Hugging Face - Local/Cloud models
-                        "omniparser + hf/meta-llama/Llama-3.2-11B-Vision-Instruct",  # 11B
-                        "omniparser + hf/Qwen/Qwen2-VL-2B-Instruct",                 # 2B - Small
-                        "omniparser + hf/microsoft/Phi-3.5-vision-instruct",         # 4.2B - Efficient
-                        "omniparser + hf/Qwen/Qwen2-VL-7B-Instruct",                 # 7B
+                        # Ollama - Vision models (optional, higher VRAM)
+                        "omniparser + ollama/llama3.2-vision:latest",  # 11B, 12GB VRAM
+                        "omniparser + ollama/llava:7b",                # 7B, 8GB VRAM
+                        "omniparser + ollama/llama3.2-vision:1b",      # 1B, 4GB VRAM
+                        "omniparser + ollama/qwen2-vl:7b",             # 7B, 8GB VRAM
 
-                        # Orchestrated variants (with planning)
+                        # Hugging Face - Text-only models (RECOMMENDED for OmniParser)
+                        "omniparser + hf/meta-llama/Llama-3.1-8B-Instruct",          # 8B, 4GB VRAM
+                        "omniparser + hf/Qwen/Qwen2.5-7B-Instruct",                  # 7B, 4GB VRAM
+                        "omniparser + hf/microsoft/Phi-3-medium-4k-instruct",        # 7B, 4GB VRAM
+                        "omniparser + hf/deepseek-ai/DeepSeek-R1-Distill-Llama-8B", # 8B, 4GB VRAM
+
+                        # Hugging Face - Vision models (optional, higher VRAM)
+                        "omniparser + hf/meta-llama/Llama-3.2-11B-Vision-Instruct",  # 11B, 12GB VRAM
+                        "omniparser + hf/Qwen/Qwen2-VL-2B-Instruct",                 # 2B, 4GB VRAM
+                        "omniparser + hf/microsoft/Phi-3.5-vision-instruct",         # 4.2B, 6GB VRAM
+                        "omniparser + hf/Qwen/Qwen2-VL-7B-Instruct",                 # 7B, 8GB VRAM
+
+                        # Orchestrated variants (with planning) - Text-only
                         "omniparser + gpt-4o-orchestrated",
                         "omniparser + o1-orchestrated",
                         "omniparser + o3-mini-orchestrated",
                         "omniparser + R1-orchestrated",
                         "omniparser + qwen2.5vl-orchestrated",
+                        "omniparser + ollama/llama3.1:8b-instruct-q4_K_M-orchestrated",
+                        "omniparser + ollama/deepseek-r1:7b-orchestrated",
+                        "omniparser + hf/Qwen/Qwen2.5-7B-Instruct-orchestrated",
+
+                        # Orchestrated variants - Vision models
                         "omniparser + ollama/llama3.2-vision:latest-orchestrated",
                         "omniparser + ollama/llava:7b-orchestrated",
                         "omniparser + hf/Qwen/Qwen2-VL-2B-Instruct-orchestrated",
