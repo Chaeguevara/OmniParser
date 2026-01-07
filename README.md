@@ -61,15 +61,29 @@ mv weights/icon_caption weights/icon_caption_florence
 
 ## Usage
 
-### 1. Simple Demo (Screenshot Parsing Only)
+### 1. Simple Demo (Screenshot Parsing)
 
-Parse a screenshot to detect UI elements:
+Parse screenshots to detect UI elements:
 
 ```bash
 python gradio_demo.py
 ```
 
-Open http://localhost:7861 in your browser, upload a screenshot, and see detected elements.
+Open http://localhost:7861 in your browser.
+
+**Three modes available:**
+
+| Mode | How to Use |
+|------|------------|
+| **Upload** | Drag & drop or click to upload a screenshot |
+| **Capture Screen** | Click "📷 Capture Screen" to grab your current screen |
+| **Auto-Refresh** | Enable "🔄 Auto-Refresh" checkbox for continuous parsing |
+
+**Auto-Refresh Mode:**
+- Check the "Auto-Refresh" checkbox
+- Set refresh interval (1-30 seconds)
+- Your screen will be automatically captured and parsed at the specified interval
+- Useful for monitoring UI changes in real-time
 
 ### 2. Full OmniTool Stack (GUI Agent)
 
