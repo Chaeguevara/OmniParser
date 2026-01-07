@@ -14,6 +14,8 @@ from anthropic.types.beta import BetaMessage, BetaTextBlock, BetaToolUseBlock, B
 
 from agent.llm_utils.oaiclient import run_oai_interleaved
 from agent.llm_utils.groqclient import run_groq_interleaved
+from agent.llm_utils.ollamaclient import run_ollama_interleaved
+from agent.llm_utils.hfclient import run_hf_interleaved
 from agent.llm_utils.utils import is_image_path
 import time
 import re
@@ -194,6 +196,30 @@ class VLMOrchestratedAgent:
             print(f"qwen token usage: {token_usage}")
             self.total_token_usage += token_usage
             self.total_cost += (token_usage * 2.2 / 1000000)  # https://help.aliyun.com/zh/model-studio/getting-started/models?spm=a2c4g.11186623.0.0.74b04823CGnPv7#fe96cfb1a422a
+        elif "ollama" in self.model or self.provider == "ollama":
+            vlm_response, token_usage = run_ollama_interleaved(
+                messages=planner_messages,
+                system=system,
+                model_name=self.model.replace("ollama + ", ""),  # Remove "ollama + " prefix if present
+                api_key=self.api_key,
+                max_tokens=self.max_tokens,
+                temperature=0,
+            )
+            print(f"ollama token usage: {token_usage}")
+            self.total_token_usage += token_usage
+            self.total_cost += 0  # Local inference, no cost
+        elif "huggingface" in self.model or "hf" in self.model or self.provider == "huggingface":
+            vlm_response, token_usage = run_hf_interleaved(
+                messages=planner_messages,
+                system=system,
+                model_name=self.model.replace("huggingface + ", "").replace("hf + ", ""),
+                api_key=self.api_key,
+                max_tokens=self.max_tokens,
+                temperature=0,
+            )
+            print(f"huggingface token usage: {token_usage}")
+            self.total_token_usage += token_usage
+            self.total_cost += 0  # Assume local or free tier
         else:
             raise ValueError(f"Model {self.model} not supported")
         latency_vlm = time.time() - start

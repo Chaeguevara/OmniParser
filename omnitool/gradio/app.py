@@ -302,7 +302,23 @@ with gr.Blocks(theme=gr.themes.Default()) as demo:
             with gr.Column():
                 model = gr.Dropdown(
                     label="Model",
-                    choices=["omniparser + gpt-4o", "omniparser + o1", "omniparser + o3-mini", "omniparser + R1", "omniparser + qwen2.5vl", "claude-3-5-sonnet-20241022", "omniparser + gpt-4o-orchestrated", "omniparser + o1-orchestrated", "omniparser + o3-mini-orchestrated", "omniparser + R1-orchestrated", "omniparser + qwen2.5vl-orchestrated"],
+                    choices=[
+                        "omniparser + gpt-4o",
+                        "omniparser + o1",
+                        "omniparser + o3-mini",
+                        "omniparser + R1",
+                        "omniparser + qwen2.5vl",
+                        "claude-3-5-sonnet-20241022",
+                        "omniparser + ollama",  # Local Ollama
+                        "omniparser + huggingface",  # Hugging Face
+                        "omniparser + gpt-4o-orchestrated",
+                        "omniparser + o1-orchestrated",
+                        "omniparser + o3-mini-orchestrated",
+                        "omniparser + R1-orchestrated",
+                        "omniparser + qwen2.5vl-orchestrated",
+                        "omniparser + ollama-orchestrated",  # Local Ollama orchestrated
+                        "omniparser + huggingface-orchestrated"  # Hugging Face orchestrated
+                    ],
                     value="omniparser + gpt-4o",
                     interactive=True,
                 )
@@ -353,15 +369,19 @@ with gr.Blocks(theme=gr.themes.Default()) as demo:
     def update_model(model_selection, state):
         state["model"] = model_selection
         print(f"Model updated to: {state['model']}")
-        
+
         if model_selection == "claude-3-5-sonnet-20241022":
             provider_choices = [option.value for option in APIProvider if option.value != "openai"]
         elif model_selection in set(["omniparser + gpt-4o", "omniparser + o1", "omniparser + o3-mini", "omniparser + gpt-4o-orchestrated", "omniparser + o1-orchestrated", "omniparser + o3-mini-orchestrated"]):
             provider_choices = ["openai"]
-        elif model_selection == "omniparser + R1":
+        elif model_selection == "omniparser + R1" or model_selection == "omniparser + R1-orchestrated":
             provider_choices = ["groq"]
-        elif model_selection == "omniparser + qwen2.5vl":
+        elif model_selection == "omniparser + qwen2.5vl" or model_selection == "omniparser + qwen2.5vl-orchestrated":
             provider_choices = ["dashscope"]
+        elif model_selection == "omniparser + ollama" or model_selection == "omniparser + ollama-orchestrated":
+            provider_choices = ["ollama"]
+        elif model_selection == "omniparser + huggingface" or model_selection == "omniparser + huggingface-orchestrated":
+            provider_choices = ["huggingface"]
         else:
             provider_choices = [option.value for option in APIProvider]
         default_provider_value = provider_choices[0]
