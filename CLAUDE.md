@@ -54,6 +54,8 @@ Coordinates: normalized [0-1] in API, pixels internally.
 3. **YOLO is AGPL** - requires attribution and open source
 4. **Test with `gradio_demo.py` first** - before full stack
 5. **API keys** - never hardcode, use env vars or UI input
+6. **Security: Gradio tunneling disabled by default** - `share=False` to prevent public exposure
+7. **OS limitation: Windows-only currently** - VM requires Windows 11 Docker container
 
 ## Environment
 
@@ -61,6 +63,35 @@ Coordinates: normalized [0-1] in API, pixels internally.
 - venv-based setup via `./install.sh`
 - GPU optional (CUDA auto-detected), CPU works slower
 - Docker required for OmniBox VM
+
+## Security & Platform Limitations
+
+### Security Considerations
+
+- **Gradio public tunneling disabled by default** (`share=False`)
+  - Only enable `share=True` in controlled development environments
+  - Public tunnels expose your local service to the internet
+  - Use authentication if sharing is required
+
+- **VM security**
+  - Windows 11 VM runs with full GUI automation access
+  - Limit network exposure of Flask server (port 5000)
+  - Use only for testing/development, not production
+
+- **API key protection**
+  - Never commit API keys to git
+  - Use environment variables or UI input only
+  - Keys stored in `~/.anthropic/` with 600 permissions
+
+### Platform Support
+
+**Current status: Windows-only**
+
+- **Full support:** Windows 11 VM (Docker-based OmniBox)
+- **Partial support:** Core parsing works cross-platform, but UI automation requires Windows VM
+- **Not supported:** Native Linux/macOS UI automation
+
+**For multi-program interaction**, see [`docs/WINDOW_MANAGEMENT.md`](docs/WINDOW_MANAGEMENT.md) for cross-platform roadmap.
 
 ## Detailed Documentation
 
@@ -71,6 +102,7 @@ Coordinates: normalized [0-1] in API, pixels internally.
 | Design patterns, conventions | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
 | Adding providers, tools, models | [`docs/EXTENDING.md`](docs/EXTENDING.md) |
 | Common errors & solutions | [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) |
+| Window management & multi-app automation | [`docs/WINDOW_MANAGEMENT.md`](docs/WINDOW_MANAGEMENT.md) |
 
 ## Commit Convention
 
