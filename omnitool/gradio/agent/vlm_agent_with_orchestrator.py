@@ -196,11 +196,17 @@ class VLMOrchestratedAgent:
             print(f"qwen token usage: {token_usage}")
             self.total_token_usage += token_usage
             self.total_cost += (token_usage * 2.2 / 1000000)  # https://help.aliyun.com/zh/model-studio/getting-started/models?spm=a2c4g.11186623.0.0.74b04823CGnPv7#fe96cfb1a422a
-        elif "ollama" in self.model or self.provider == "ollama":
+        elif "ollama/" in self.model or self.provider == "ollama":
+            # Extract model name from format: "omniparser + ollama/llama3.2-vision:latest"
+            if "ollama/" in self.model:
+                model_name = self.model.split("ollama/")[1].replace("-orchestrated", "")
+            else:
+                model_name = "llama3.2-vision:latest"  # Default fallback
+
             vlm_response, token_usage = run_ollama_interleaved(
                 messages=planner_messages,
                 system=system,
-                model_name=self.model.replace("ollama + ", ""),  # Remove "ollama + " prefix if present
+                model_name=model_name,
                 api_key=self.api_key,
                 max_tokens=self.max_tokens,
                 temperature=0,
@@ -208,11 +214,17 @@ class VLMOrchestratedAgent:
             print(f"ollama token usage: {token_usage}")
             self.total_token_usage += token_usage
             self.total_cost += 0  # Local inference, no cost
-        elif "huggingface" in self.model or "hf" in self.model or self.provider == "huggingface":
+        elif "hf/" in self.model or self.provider == "huggingface":
+            # Extract model name from format: "omniparser + hf/meta-llama/Llama-3.2-11B-Vision-Instruct"
+            if "hf/" in self.model:
+                model_name = self.model.split("hf/")[1].replace("-orchestrated", "")
+            else:
+                model_name = "meta-llama/Llama-3.2-11B-Vision-Instruct"  # Default fallback
+
             vlm_response, token_usage = run_hf_interleaved(
                 messages=planner_messages,
                 system=system,
-                model_name=self.model.replace("huggingface + ", "").replace("hf + ", ""),
+                model_name=model_name,
                 api_key=self.api_key,
                 max_tokens=self.max_tokens,
                 temperature=0,

@@ -303,21 +303,52 @@ with gr.Blocks(theme=gr.themes.Default()) as demo:
                 model = gr.Dropdown(
                     label="Model",
                     choices=[
+                        # Cloud API models
                         "omniparser + gpt-4o",
                         "omniparser + o1",
                         "omniparser + o3-mini",
                         "omniparser + R1",
                         "omniparser + qwen2.5vl",
                         "claude-3-5-sonnet-20241022",
-                        "omniparser + ollama",  # Local Ollama
-                        "omniparser + huggingface",  # Hugging Face
+
+                        # Ollama - Text-only models (RECOMMENDED for OmniParser)
+                        "omniparser + ollama/llama3.1:8b-instruct-q4_K_M",  # 8B, 4GB VRAM - Best for limited GPU
+                        "omniparser + ollama/deepseek-r1:7b",               # 7B, 4GB VRAM - Reasoning model
+                        "omniparser + ollama/qwen2.5:7b-instruct",          # 7B, 4GB VRAM - Efficient
+
+                        # Ollama - Vision models (optional, higher VRAM)
+                        "omniparser + ollama/llama3.2-vision:latest",  # 11B, 12GB VRAM
+                        "omniparser + ollama/llava:7b",                # 7B, 8GB VRAM
+                        "omniparser + ollama/llama3.2-vision:1b",      # 1B, 4GB VRAM
+                        "omniparser + ollama/qwen2-vl:7b",             # 7B, 8GB VRAM
+
+                        # Hugging Face - Text-only models (RECOMMENDED for OmniParser)
+                        "omniparser + hf/meta-llama/Llama-3.1-8B-Instruct",          # 8B, 4GB VRAM
+                        "omniparser + hf/Qwen/Qwen2.5-7B-Instruct",                  # 7B, 4GB VRAM
+                        "omniparser + hf/microsoft/Phi-3-medium-4k-instruct",        # 7B, 4GB VRAM
+                        "omniparser + hf/deepseek-ai/DeepSeek-R1-Distill-Llama-8B", # 8B, 4GB VRAM
+
+                        # Hugging Face - Vision models (optional, higher VRAM)
+                        "omniparser + hf/meta-llama/Llama-3.2-11B-Vision-Instruct",  # 11B, 12GB VRAM
+                        "omniparser + hf/Qwen/Qwen2-VL-2B-Instruct",                 # 2B, 4GB VRAM
+                        "omniparser + hf/microsoft/Phi-3.5-vision-instruct",         # 4.2B, 6GB VRAM
+                        "omniparser + hf/Qwen/Qwen2-VL-7B-Instruct",                 # 7B, 8GB VRAM
+
+                        # Orchestrated variants (with planning) - Text-only
                         "omniparser + gpt-4o-orchestrated",
                         "omniparser + o1-orchestrated",
                         "omniparser + o3-mini-orchestrated",
                         "omniparser + R1-orchestrated",
                         "omniparser + qwen2.5vl-orchestrated",
-                        "omniparser + ollama-orchestrated",  # Local Ollama orchestrated
-                        "omniparser + huggingface-orchestrated"  # Hugging Face orchestrated
+                        "omniparser + ollama/llama3.1:8b-instruct-q4_K_M-orchestrated",
+                        "omniparser + ollama/deepseek-r1:7b-orchestrated",
+                        "omniparser + hf/Qwen/Qwen2.5-7B-Instruct-orchestrated",
+
+                        # Orchestrated variants - Vision models
+                        "omniparser + ollama/llama3.2-vision:latest-orchestrated",
+                        "omniparser + ollama/llava:7b-orchestrated",
+                        "omniparser + hf/Qwen/Qwen2-VL-2B-Instruct-orchestrated",
+                        "omniparser + hf/microsoft/Phi-3.5-vision-instruct-orchestrated",
                     ],
                     value="omniparser + gpt-4o",
                     interactive=True,
@@ -378,9 +409,9 @@ with gr.Blocks(theme=gr.themes.Default()) as demo:
             provider_choices = ["groq"]
         elif model_selection == "omniparser + qwen2.5vl" or model_selection == "omniparser + qwen2.5vl-orchestrated":
             provider_choices = ["dashscope"]
-        elif model_selection == "omniparser + ollama" or model_selection == "omniparser + ollama-orchestrated":
+        elif "ollama/" in model_selection:  # Handle ollama/model-name format
             provider_choices = ["ollama"]
-        elif model_selection == "omniparser + huggingface" or model_selection == "omniparser + huggingface-orchestrated":
+        elif "hf/" in model_selection:  # Handle hf/model-name format
             provider_choices = ["huggingface"]
         else:
             provider_choices = [option.value for option in APIProvider]

@@ -4,7 +4,20 @@ OmniParser now supports local LLM inference through **Ollama** and **Hugging Fac
 - ✅ **Zero cloud costs** - Run completely offline
 - ✅ **Data privacy** - No data leaves your machine
 - ✅ **Air-gapped environments** - Works without internet
-- ✅ **Custom models** - Use any vision-capable LLM
+- ✅ **Custom models** - Use any LLM (text-only or vision)
+
+## 💡 Text-Only vs Vision Models
+
+**IMPORTANT:** OmniParser provides **structured text output** (bounding boxes, coordinates, element labels) from screenshots. The LLM receives this structured data as TEXT, not images.
+
+**Text-only models are RECOMMENDED** because:
+- ✅ **3-4x lighter:** 7-8B parameters vs 11B+ for vision models
+- ✅ **Lower VRAM:** 2-4GB vs 8-12GB
+- ✅ **2-3x faster inference**
+- ✅ **Microsoft explicitly supports text-only models** (o1, o3-mini, R1 with OmniParser)
+- ✅ **Vision capabilities are redundant** - OmniParser already parsed the UI
+
+**Vision models are optional** for advanced use cases where you need the LLM to directly interpret raw screenshots.
 
 ## Quick Comparison
 
@@ -13,6 +26,50 @@ OmniParser now supports local LLM inference through **Ollama** and **Hugging Fac
 | **Ollama** | Easy | Recommended | Quick local setup, beginners |
 | **Hugging Face** | Medium | Recommended | Advanced users, custom models |
 | OpenAI/Claude | Easy | No | Cloud API, best performance |
+
+---
+
+## 🚀 Recommended Models for Limited GPU Resources
+
+### Text-Only Models (RECOMMENDED - Lower VRAM, Faster)
+
+#### Ollama (Easiest)
+```bash
+# 8B text-only - Runs on 4GB VRAM (BEST for limited GPU)
+ollama pull llama3.1:8b-instruct-q4_K_M
+
+# 7B reasoning model - Runs on 4GB VRAM
+ollama pull deepseek-r1:7b
+
+# 7B efficient model - Runs on 4GB VRAM
+ollama pull qwen2.5:7b-instruct
+```
+
+#### Hugging Face
+| Model | VRAM | Quality | Speed | UI Selection |
+|-------|------|---------|-------|--------------|
+| **Llama-3.1-8B-Instruct** | 4GB | ⭐⭐⭐⭐ | Very Fast | `omniparser + hf/meta-llama/Llama-3.1-8B-Instruct` |
+| **Qwen2.5-7B-Instruct** | 4GB | ⭐⭐⭐⭐ | Very Fast | `omniparser + hf/Qwen/Qwen2.5-7B-Instruct` |
+| **Phi-3-medium-4k-instruct** | 4GB | ⭐⭐⭐⭐ | Fast | `omniparser + hf/microsoft/Phi-3-medium-4k-instruct` |
+| **DeepSeek-R1-Distill-Llama-8B** | 4GB | ⭐⭐⭐⭐⭐ | Fast | `omniparser + hf/deepseek-ai/DeepSeek-R1-Distill-Llama-8B` |
+
+### Vision Models (Optional - Higher VRAM)
+
+#### Ollama
+```bash
+# 1B vision model - Runs on 4GB VRAM (fast but limited)
+ollama pull llama3.2-vision:1b
+
+# 7B vision model - Runs on 8GB VRAM
+ollama pull llava:7b
+```
+
+#### Hugging Face
+| Model | VRAM | Quality | Speed | UI Selection |
+|-------|------|---------|-------|--------------|
+| **Qwen2-VL-2B-Instruct** | 4GB | ⭐⭐⭐ | Very Fast | `omniparser + hf/Qwen/Qwen2-VL-2B-Instruct` |
+| **Phi-3.5-vision-instruct** | 6GB | ⭐⭐⭐⭐ | Fast | `omniparser + hf/microsoft/Phi-3.5-vision-instruct` |
+| **Qwen2-VL-7B-Instruct** | 8GB | ⭐⭐⭐⭐ | Medium | `omniparser + hf/Qwen/Qwen2-VL-7B-Instruct` |
 
 ---
 
@@ -35,18 +92,29 @@ Download installer from https://ollama.com/download
 ollama serve  # Start Ollama server
 ```
 
-### Install Vision Models
+### Install Models
 
-Ollama supports several vision-capable models:
+Choose and install models based on your GPU capability:
 
+**Text-Only Models (RECOMMENDED - Faster, Lower VRAM):**
 ```bash
-# Llama 3.2 Vision (11B) - Recommended
-ollama pull llama3.2-vision
+# For 4GB VRAM (Best for limited GPU)
+ollama pull llama3.1:8b-instruct-q4_K_M   # 8B text-only
+ollama pull deepseek-r1:7b                # 7B reasoning
+ollama pull qwen2.5:7b-instruct           # 7B efficient
+```
 
-# Alternative models
-ollama pull llava                    # 7B vision model
-ollama pull qwen2-vl:7b             # Qwen2-VL 7B
-ollama pull bakllava                 # BakLLaVA
+**Vision Models (Optional - Higher VRAM):**
+```bash
+# For 12GB+ VRAM
+ollama pull llama3.2-vision:latest   # 11B vision model
+
+# For 8GB VRAM
+ollama pull llava:7b                # 7B vision model
+ollama pull qwen2-vl:7b             # 7B, excellent OCR
+
+# For 4GB VRAM
+ollama pull llama3.2-vision:1b      # 1B tiny vision model
 ```
 
 ### Usage in OmniParser
@@ -56,17 +124,33 @@ ollama pull bakllava                 # BakLLaVA
    ollama serve
    ```
 
-2. **Start OmniParser:**
+2. **Install your chosen model:**
+   ```bash
+   # Text-only (RECOMMENDED)
+   ollama pull llama3.1:8b-instruct-q4_K_M
+
+   # Or vision model (optional)
+   ollama pull llama3.2-vision:latest
+   ```
+
+3. **Start OmniParser:**
    ```bash
    cd omnitool/gradio
    python app.py
    ```
 
-3. **In Gradio UI:**
-   - Select model: `omniparser + ollama`
-   - Set API Provider: `ollama`
-   - API Key: Leave empty or enter "ollama" (not required)
-   - In chat, you can now interact with local Ollama models
+4. **In Gradio UI:**
+   - Select model from dropdown:
+     - **Text-only (RECOMMENDED):**
+       - `omniparser + ollama/llama3.1:8b-instruct-q4_K_M` (8B, 4GB VRAM)
+       - `omniparser + ollama/deepseek-r1:7b` (7B, 4GB VRAM)
+       - `omniparser + ollama/qwen2.5:7b-instruct` (7B, 4GB VRAM)
+     - **Vision (optional):**
+       - `omniparser + ollama/llama3.2-vision:latest` (11B, 12GB VRAM)
+       - `omniparser + ollama/llava:7b` (7B, 8GB VRAM)
+   - Set API Provider: `ollama` (auto-selected)
+   - API Key: Leave empty (not required for local)
+   - Start chatting with your local model!
 
 ### Configuration
 
@@ -145,6 +229,12 @@ docker run --gpus all -p 8080:80 \
 
 ### Minimum Requirements
 
+**Text-Only Models (RECOMMENDED):**
+| Model Size | VRAM Required | Recommended GPU |
+|------------|---------------|-----------------|
+| 7-8B | 2-4 GB | RTX 3050, RTX 4050, GTX 1660 |
+
+**Vision Models (Optional):**
 | Model Size | VRAM Required | Recommended GPU |
 |------------|---------------|-----------------|
 | 7B | 8 GB | RTX 3060 12GB, RTX 4060 |
@@ -162,25 +252,46 @@ ollama run llama3.2-vision  # Automatically uses CPU if no GPU
 
 ---
 
-## Recommended Vision Models
+## Recommended Models
 
-### For Ollama
+### Text-Only Models (RECOMMENDED for OmniParser)
 
-| Model | Size | VRAM | Quality | Use Case |
-|-------|------|------|---------|----------|
-| **llama3.2-vision** | 11B | 12GB | ⭐⭐⭐⭐ | Best balance |
-| llava | 7B | 8GB | ⭐⭐⭐ | Budget GPUs |
-| qwen2-vl:7b | 7B | 8GB | ⭐⭐⭐⭐ | Good OCR |
-| bakllava | 7B | 8GB | ⭐⭐⭐ | Fast inference |
+#### For Ollama
 
-### For Hugging Face
+| Model | Size | VRAM | Quality | Use Case | UI Selection |
+|-------|------|------|---------|----------|--------------|
+| **llama3.1:8b-instruct-q4_K_M** | 8B | 4GB | ⭐⭐⭐⭐⭐ | Best for limited GPU | `omniparser + ollama/llama3.1:8b-instruct-q4_K_M` |
+| **deepseek-r1:7b** | 7B | 4GB | ⭐⭐⭐⭐⭐ | Reasoning model | `omniparser + ollama/deepseek-r1:7b` |
+| **qwen2.5:7b-instruct** | 7B | 4GB | ⭐⭐⭐⭐ | Efficient | `omniparser + ollama/qwen2.5:7b-instruct` |
 
-| Model | Size | Quality | Notes |
-|-------|------|---------|-------|
-| **Llama-3.2-11B-Vision-Instruct** | 11B | ⭐⭐⭐⭐⭐ | Best overall |
-| Qwen2-VL-7B-Instruct | 7B | ⭐⭐⭐⭐ | Excellent OCR |
-| Phi-3.5-vision-instruct | 4.2B | ⭐⭐⭐ | Very fast, low VRAM |
-| Llama-3.2-90B-Vision-Instruct | 90B | ⭐⭐⭐⭐⭐ | Best quality (requires 40GB+ VRAM) |
+#### For Hugging Face
+
+| Model | Size | VRAM | Quality | Use Case | UI Selection |
+|-------|------|------|---------|----------|--------------|
+| **Llama-3.1-8B-Instruct** | 8B | 4GB | ⭐⭐⭐⭐⭐ | Best for limited GPU | `omniparser + hf/meta-llama/Llama-3.1-8B-Instruct` |
+| **DeepSeek-R1-Distill-Llama-8B** | 8B | 4GB | ⭐⭐⭐⭐⭐ | Reasoning model | `omniparser + hf/deepseek-ai/DeepSeek-R1-Distill-Llama-8B` |
+| **Qwen2.5-7B-Instruct** | 7B | 4GB | ⭐⭐⭐⭐ | Efficient | `omniparser + hf/Qwen/Qwen2.5-7B-Instruct` |
+| **Phi-3-medium-4k-instruct** | 7B | 4GB | ⭐⭐⭐⭐ | Very efficient | `omniparser + hf/microsoft/Phi-3-medium-4k-instruct` |
+
+### Vision Models (Optional - Higher VRAM)
+
+#### For Ollama
+
+| Model | Size | VRAM | Quality | Use Case | UI Selection |
+|-------|------|------|---------|----------|--------------|
+| **llama3.2-vision:latest** | 11B | 12GB | ⭐⭐⭐⭐ | Best vision quality | `omniparser + ollama/llama3.2-vision:latest` |
+| llava:7b | 7B | 8GB | ⭐⭐⭐ | Budget GPUs | `omniparser + ollama/llava:7b` |
+| qwen2-vl:7b | 7B | 8GB | ⭐⭐⭐⭐ | Good OCR | `omniparser + ollama/qwen2-vl:7b` |
+| llama3.2-vision:1b | 1B | 4GB | ⭐⭐ | Very limited GPU | `omniparser + ollama/llama3.2-vision:1b` |
+
+#### For Hugging Face
+
+| Model | Size | VRAM | Quality | Use Case | UI Selection |
+|-------|------|------|---------|----------|--------------|
+| **Llama-3.2-11B-Vision-Instruct** | 11B | 12GB | ⭐⭐⭐⭐⭐ | Best vision quality | `omniparser + hf/meta-llama/Llama-3.2-11B-Vision-Instruct` |
+| Qwen2-VL-7B-Instruct | 7B | 8GB | ⭐⭐⭐⭐ | Excellent OCR | `omniparser + hf/Qwen/Qwen2-VL-7B-Instruct` |
+| Phi-3.5-vision-instruct | 4.2B | 6GB | ⭐⭐⭐⭐ | Very efficient | `omniparser + hf/microsoft/Phi-3.5-vision-instruct` |
+| Qwen2-VL-2B-Instruct | 2B | 4GB | ⭐⭐⭐ | Low VRAM | `omniparser + hf/Qwen/Qwen2-VL-2B-Instruct` |
 
 ---
 
@@ -227,17 +338,30 @@ export HF_API_TOKEN="hf_your_token_here"
 
 ## Performance Comparison
 
-Based on llama3.2-vision 11B model:
+**Text-Only Models (RECOMMENDED for OmniParser):**
+
+| Environment | Model | Latency/Response | VRAM | Cost |
+|-------------|-------|------------------|------|------|
+| **Ollama (Local, RTX 4060)** | llama3.1:8b-instruct | ~1-2s | 4GB | $0 |
+| **Ollama (Local, RTX 4060)** | deepseek-r1:7b | ~1-2s | 4GB | $0 |
+| **TGI (Local, RTX 4060)** | Llama-3.1-8B-Instruct | ~1-2s | 4GB | $0 |
+
+**Vision Models (Optional, for comparison):**
+
+| Environment | Model | Latency/Response | VRAM | Cost |
+|-------------|-------|------------------|------|------|
+| **Ollama (Local, RTX 4080)** | llama3.2-vision:11b | ~3-5s | 12GB | $0 |
+| **TGI (Local, RTX 4080)** | Llama-3.2-11B-Vision | ~3-5s | 12GB | $0 |
+| HF Inference API (Cloud) | Vision models | ~8-12s | N/A | Free tier |
+
+**Cloud API (for comparison):**
 
 | Environment | Latency/Response | Cost |
 |-------------|------------------|------|
-| **Ollama (Local, RTX 4080)** | ~3-5s | $0 |
-| **TGI (Local, RTX 4080)** | ~3-5s | $0 |
-| HF Inference API (Cloud) | ~8-12s | Free tier |
 | GPT-4o (Cloud) | ~2-3s | $0.0025/response |
 | Claude 3.5 Sonnet (Cloud) | ~2-3s | $0.003/response |
 
-*Latency varies based on image resolution and task complexity.*
+*Latency varies based on task complexity and hardware.*
 
 ---
 
@@ -257,9 +381,12 @@ export HUGGINGFACE_API_TOKEN="hf_your_token_here"  # Alternative to HF_API_TOKEN
 
 ## Next Steps
 
-1. **Try Ollama first** - Easiest to get started
-2. **Test with simple tasks** - "List all open windows"
-3. **Adjust settings** - Reduce screenshot count if slow
-4. **Compare quality** - Local vs cloud models for your use case
+1. **Try Ollama with text-only models first** - Easiest and fastest
+   - `ollama pull llama3.1:8b-instruct-q4_K_M` (RECOMMENDED for 4GB GPU)
+   - `ollama pull deepseek-r1:7b` (Reasoning model)
+2. **Test with simple tasks** - "List all open windows" or "Click the submit button"
+3. **Start with text-only models** - 2-3x faster, lower VRAM (4GB vs 12GB)
+4. **Only use vision models if needed** - Advanced use cases where LLM needs raw screenshots
+5. **Compare quality** - Text-only vs vision models for your use case
 
 For questions and issues, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).

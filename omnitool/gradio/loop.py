@@ -70,7 +70,9 @@ def sampling_loop_sync(
             max_tokens=max_tokens,
             only_n_most_recent_images=only_n_most_recent_images
         )
-    elif model in set(["omniparser + gpt-4o", "omniparser + o1", "omniparser + o3-mini", "omniparser + R1", "omniparser + qwen2.5vl", "omniparser + ollama", "omniparser + huggingface"]):
+    elif (model in set(["omniparser + gpt-4o", "omniparser + o1", "omniparser + o3-mini", "omniparser + R1", "omniparser + qwen2.5vl"]) or
+          ("ollama/" in model and "-orchestrated" not in model) or
+          ("hf/" in model and "-orchestrated" not in model)):
         actor = VLMAgent(
             model=model,
             provider=provider,
@@ -80,7 +82,9 @@ def sampling_loop_sync(
             max_tokens=max_tokens,
             only_n_most_recent_images=only_n_most_recent_images
         )
-    elif model in set(["omniparser + gpt-4o-orchestrated", "omniparser + o1-orchestrated", "omniparser + o3-mini-orchestrated", "omniparser + R1-orchestrated", "omniparser + qwen2.5vl-orchestrated", "omniparser + ollama-orchestrated", "omniparser + huggingface-orchestrated"]):
+    elif (model in set(["omniparser + gpt-4o-orchestrated", "omniparser + o1-orchestrated", "omniparser + o3-mini-orchestrated", "omniparser + R1-orchestrated", "omniparser + qwen2.5vl-orchestrated"]) or
+          ("ollama/" in model and "-orchestrated" in model) or
+          ("hf/" in model and "-orchestrated" in model)):
         actor = VLMOrchestratedAgent(
             model=model,
             provider=provider,
@@ -119,7 +123,8 @@ def sampling_loop_sync(
 
             messages.append({"content": tool_result_content, "role": "user"})
     
-    elif model in set(["omniparser + gpt-4o", "omniparser + o1", "omniparser + o3-mini", "omniparser + R1", "omniparser + qwen2.5vl", "omniparser + ollama", "omniparser + huggingface", "omniparser + gpt-4o-orchestrated", "omniparser + o1-orchestrated", "omniparser + o3-mini-orchestrated", "omniparser + R1-orchestrated", "omniparser + qwen2.5vl-orchestrated", "omniparser + ollama-orchestrated", "omniparser + huggingface-orchestrated"]):
+    elif (model in set(["omniparser + gpt-4o", "omniparser + o1", "omniparser + o3-mini", "omniparser + R1", "omniparser + qwen2.5vl", "omniparser + gpt-4o-orchestrated", "omniparser + o1-orchestrated", "omniparser + o3-mini-orchestrated", "omniparser + R1-orchestrated", "omniparser + qwen2.5vl-orchestrated"]) or
+          "ollama/" in model or "hf/" in model):
         while True:
             parsed_screen = omniparser_client()
             tools_use_needed, vlm_response_json = actor(messages=messages, parsed_screen=parsed_screen)
