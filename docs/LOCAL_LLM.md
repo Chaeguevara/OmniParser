@@ -16,6 +16,34 @@ OmniParser now supports local LLM inference through **Ollama** and **Hugging Fac
 
 ---
 
+## 🚀 For Limited GPU Resources (< 8GB VRAM)
+
+If your GPU has limited VRAM, start with these **small/distilled models**:
+
+### Ollama (Easiest)
+```bash
+# 1B model - Runs on 4GB VRAM (fast but limited capability)
+ollama pull llama3.2-vision:1b
+
+# 7B model - Runs on 8GB VRAM (good balance)
+ollama pull llava:7b
+```
+
+### Hugging Face
+| Model | VRAM | Quality | Speed |
+|-------|------|---------|-------|
+| **Qwen2-VL-2B-Instruct** | 4GB | ⭐⭐⭐ | Very Fast |
+| **Phi-3.5-vision-instruct** | 6GB | ⭐⭐⭐⭐ | Fast |
+| **Qwen2-VL-7B-Instruct** | 8GB | ⭐⭐⭐⭐ | Medium |
+
+**In Gradio UI**, select from dropdown:
+- `omniparser + ollama/llama3.2-vision:1b` (for 4GB GPUs)
+- `omniparser + ollama/llava:7b` (for 8GB GPUs)
+- `omniparser + hf/Qwen/Qwen2-VL-2B-Instruct` (for 4GB GPUs)
+- `omniparser + hf/microsoft/Phi-3.5-vision-instruct` (for 6GB GPUs)
+
+---
+
 ## Option 1: Ollama (Recommended for Local)
 
 **Ollama** provides the easiest local LLM experience with a simple installer and automatic model management.
@@ -37,16 +65,18 @@ ollama serve  # Start Ollama server
 
 ### Install Vision Models
 
-Ollama supports several vision-capable models:
+Choose and install models based on your GPU capability:
 
 ```bash
-# Llama 3.2 Vision (11B) - Recommended
-ollama pull llama3.2-vision
+# For 12GB+ VRAM (Best quality)
+ollama pull llama3.2-vision:latest   # 11B model
 
-# Alternative models
-ollama pull llava                    # 7B vision model
-ollama pull qwen2-vl:7b             # Qwen2-VL 7B
-ollama pull bakllava                 # BakLLaVA
+# For 8GB VRAM (Good balance)
+ollama pull llava:7b                # 7B vision model
+ollama pull qwen2-vl:7b             # 7B, excellent OCR
+
+# For 4GB VRAM (Small, fast)
+ollama pull llama3.2-vision:1b      # 1B tiny model
 ```
 
 ### Usage in OmniParser
@@ -56,17 +86,26 @@ ollama pull bakllava                 # BakLLaVA
    ollama serve
    ```
 
-2. **Start OmniParser:**
+2. **Install your chosen model:**
+   ```bash
+   ollama pull llama3.2-vision:latest  # Or whichever model you want
+   ```
+
+3. **Start OmniParser:**
    ```bash
    cd omnitool/gradio
    python app.py
    ```
 
-3. **In Gradio UI:**
-   - Select model: `omniparser + ollama`
-   - Set API Provider: `ollama`
-   - API Key: Leave empty or enter "ollama" (not required)
-   - In chat, you can now interact with local Ollama models
+4. **In Gradio UI:**
+   - Select model from dropdown:
+     - `omniparser + ollama/llama3.2-vision:latest` (11B)
+     - `omniparser + ollama/llava:7b` (7B)
+     - `omniparser + ollama/llama3.2-vision:1b` (1B)
+     - `omniparser + ollama/qwen2-vl:7b` (7B, OCR)
+   - Set API Provider: `ollama` (auto-selected)
+   - API Key: Leave empty (not required for local)
+   - Start chatting with your local model!
 
 ### Configuration
 
@@ -166,21 +205,21 @@ ollama run llama3.2-vision  # Automatically uses CPU if no GPU
 
 ### For Ollama
 
-| Model | Size | VRAM | Quality | Use Case |
-|-------|------|------|---------|----------|
-| **llama3.2-vision** | 11B | 12GB | ⭐⭐⭐⭐ | Best balance |
-| llava | 7B | 8GB | ⭐⭐⭐ | Budget GPUs |
-| qwen2-vl:7b | 7B | 8GB | ⭐⭐⭐⭐ | Good OCR |
-| bakllava | 7B | 8GB | ⭐⭐⭐ | Fast inference |
+| Model | Size | VRAM | Quality | Use Case | UI Selection |
+|-------|------|------|---------|----------|--------------|
+| **llama3.2-vision:latest** | 11B | 12GB | ⭐⭐⭐⭐ | Best balance | `omniparser + ollama/llama3.2-vision:latest` |
+| llava:7b | 7B | 8GB | ⭐⭐⭐ | Budget GPUs | `omniparser + ollama/llava:7b` |
+| qwen2-vl:7b | 7B | 8GB | ⭐⭐⭐⭐ | Good OCR | `omniparser + ollama/qwen2-vl:7b` |
+| llama3.2-vision:1b | 1B | 4GB | ⭐⭐ | Very limited GPU | `omniparser + ollama/llama3.2-vision:1b` |
 
 ### For Hugging Face
 
-| Model | Size | Quality | Notes |
-|-------|------|---------|-------|
-| **Llama-3.2-11B-Vision-Instruct** | 11B | ⭐⭐⭐⭐⭐ | Best overall |
-| Qwen2-VL-7B-Instruct | 7B | ⭐⭐⭐⭐ | Excellent OCR |
-| Phi-3.5-vision-instruct | 4.2B | ⭐⭐⭐ | Very fast, low VRAM |
-| Llama-3.2-90B-Vision-Instruct | 90B | ⭐⭐⭐⭐⭐ | Best quality (requires 40GB+ VRAM) |
+| Model | Size | VRAM | Quality | Use Case | UI Selection |
+|-------|------|------|---------|----------|--------------|
+| **Llama-3.2-11B-Vision-Instruct** | 11B | 12GB | ⭐⭐⭐⭐⭐ | Best overall | `omniparser + hf/meta-llama/Llama-3.2-11B-Vision-Instruct` |
+| Qwen2-VL-7B-Instruct | 7B | 8GB | ⭐⭐⭐⭐ | Excellent OCR | `omniparser + hf/Qwen/Qwen2-VL-7B-Instruct` |
+| Phi-3.5-vision-instruct | 4.2B | 6GB | ⭐⭐⭐⭐ | Very efficient | `omniparser + hf/microsoft/Phi-3.5-vision-instruct` |
+| Qwen2-VL-2B-Instruct | 2B | 4GB | ⭐⭐⭐ | Low VRAM | `omniparser + hf/Qwen/Qwen2-VL-2B-Instruct` |
 
 ---
 

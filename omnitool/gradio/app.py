@@ -303,21 +303,36 @@ with gr.Blocks(theme=gr.themes.Default()) as demo:
                 model = gr.Dropdown(
                     label="Model",
                     choices=[
+                        # Cloud API models
                         "omniparser + gpt-4o",
                         "omniparser + o1",
                         "omniparser + o3-mini",
                         "omniparser + R1",
                         "omniparser + qwen2.5vl",
                         "claude-3-5-sonnet-20241022",
-                        "omniparser + ollama",  # Local Ollama
-                        "omniparser + huggingface",  # Hugging Face
+
+                        # Ollama - Local models (specify actual model)
+                        "omniparser + ollama/llama3.2-vision:latest",  # 11B - Best quality
+                        "omniparser + ollama/llava:7b",                # 7B - Good balance
+                        "omniparser + ollama/llama3.2-vision:1b",      # 1B - Tiny, fast
+                        "omniparser + ollama/qwen2-vl:7b",             # 7B - Excellent OCR
+
+                        # Hugging Face - Local/Cloud models
+                        "omniparser + hf/meta-llama/Llama-3.2-11B-Vision-Instruct",  # 11B
+                        "omniparser + hf/Qwen/Qwen2-VL-2B-Instruct",                 # 2B - Small
+                        "omniparser + hf/microsoft/Phi-3.5-vision-instruct",         # 4.2B - Efficient
+                        "omniparser + hf/Qwen/Qwen2-VL-7B-Instruct",                 # 7B
+
+                        # Orchestrated variants (with planning)
                         "omniparser + gpt-4o-orchestrated",
                         "omniparser + o1-orchestrated",
                         "omniparser + o3-mini-orchestrated",
                         "omniparser + R1-orchestrated",
                         "omniparser + qwen2.5vl-orchestrated",
-                        "omniparser + ollama-orchestrated",  # Local Ollama orchestrated
-                        "omniparser + huggingface-orchestrated"  # Hugging Face orchestrated
+                        "omniparser + ollama/llama3.2-vision:latest-orchestrated",
+                        "omniparser + ollama/llava:7b-orchestrated",
+                        "omniparser + hf/Qwen/Qwen2-VL-2B-Instruct-orchestrated",
+                        "omniparser + hf/microsoft/Phi-3.5-vision-instruct-orchestrated",
                     ],
                     value="omniparser + gpt-4o",
                     interactive=True,
@@ -378,9 +393,9 @@ with gr.Blocks(theme=gr.themes.Default()) as demo:
             provider_choices = ["groq"]
         elif model_selection == "omniparser + qwen2.5vl" or model_selection == "omniparser + qwen2.5vl-orchestrated":
             provider_choices = ["dashscope"]
-        elif model_selection == "omniparser + ollama" or model_selection == "omniparser + ollama-orchestrated":
+        elif "ollama/" in model_selection:  # Handle ollama/model-name format
             provider_choices = ["ollama"]
-        elif model_selection == "omniparser + huggingface" or model_selection == "omniparser + huggingface-orchestrated":
+        elif "hf/" in model_selection:  # Handle hf/model-name format
             provider_choices = ["huggingface"]
         else:
             provider_choices = [option.value for option in APIProvider]
