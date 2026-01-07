@@ -196,6 +196,12 @@ class VLMAgent:
                                         input={'action': vlm_response_json["Next Action"], 'text': vlm_response_json["value"]},
                                         name='computer', type='tool_use')
             response_content.append(sim_content_block)
+        elif vlm_response_json["Next Action"] == "focus_window":
+            # focus_window also uses "value" field for window title
+            sim_content_block = BetaToolUseBlock(id=f'toolu_{uuid.uuid4()}',
+                                        input={'action': vlm_response_json["Next Action"], 'text': vlm_response_json["value"]},
+                                        name='computer', type='tool_use')
+            response_content.append(sim_content_block)
         else:
             sim_content_block = BetaToolUseBlock(id=f'toolu_{uuid.uuid4()}',
                                             input={'action': vlm_response_json["Next Action"]},
@@ -225,8 +231,11 @@ Your available "Next Action" only include:
 - double_click: move mouse to box id and double clicks.
 - hover: move mouse to box id.
 - scroll_up: scrolls the screen up to view previous content.
-- scroll_down: scrolls the screen down, when the desired button is not visible, or you need to see more content. 
+- scroll_down: scrolls the screen down, when the desired button is not visible, or you need to see more content.
 - wait: waits for 1 second for the device to load or respond.
+- list_windows: lists all open windows/applications with their titles.
+- get_active_window: shows which window is currently focused/active.
+- focus_window: brings a specific window to the front by its title (use "value" field for window title).
 
 Based on the visual information from the screenshot image and the detected bounding boxes, please determine the next action, the Box ID you should operate on (if action is one of 'type', 'hover', 'scroll_up', 'scroll_down', 'wait', there should be no Box ID field), and the value (if the action is 'type') in order to complete the task.
 
@@ -264,6 +273,23 @@ Another Example:
 {{
     "Reasoning": "The current screen does not show 'submit' button, I need to scroll down to see if the button is available.",
     "Next Action": "scroll_down",
+}}
+```
+
+Another Example (Multi-window workflow):
+```json
+{{
+    "Reasoning": "I need to copy data from Excel to Chrome. First, let me check which windows are open.",
+    "Next Action": "list_windows"
+}}
+```
+
+Another Example (Window switching):
+```json
+{{
+    "Reasoning": "I can see from the window list that Excel is open but Chrome is currently active. I need to switch to Excel to copy the data.",
+    "Next Action": "focus_window",
+    "value": "Excel"
 }}
 ```
 

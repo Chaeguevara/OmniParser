@@ -29,7 +29,10 @@ Action = Literal[
     "screenshot",
     "cursor_position",
     "hover",
-    "wait"
+    "wait",
+    "list_windows",
+    "get_active_window",
+    "focus_window"
 ]
 
 
@@ -222,6 +225,27 @@ class ComputerTool(BaseAnthropicTool):
         if action == "wait":
             time.sleep(1)
             return ToolResult(output=f"Performed {action}")
+
+        # Window management actions
+        if action == "list_windows":
+            if text is not None or coordinate is not None:
+                raise ToolError(f"list_windows does not accept text or coordinate parameters")
+            return self.list_windows()
+
+        if action == "get_active_window":
+            if text is not None or coordinate is not None:
+                raise ToolError(f"get_active_window does not accept text or coordinate parameters")
+            return self.get_active_window()
+
+        if action == "focus_window":
+            if text is None:
+                raise ToolError(f"text (window title) is required for focus_window")
+            if coordinate is not None:
+                raise ToolError(f"coordinate is not accepted for focus_window")
+            if not isinstance(text, str):
+                raise ToolError(f"{text} must be a string")
+            return self.focus_window(text)
+
         raise ToolError(f"Invalid action: {action}")
 
     def send_to_vm(self, action: str):
@@ -318,7 +342,7 @@ class ComputerTool(BaseAnthropicTool):
             )
             if response.status_code != 200:
                 raise ToolError(f"Failed to get screen size. Status code: {response.status_code}")
-            
+
             output = response.json()['output'].strip()
             match = re.search(r'Size\(width=(\d+),\s*height=(\d+)\)', output)
             if not match:
@@ -327,3 +351,67 @@ class ComputerTool(BaseAnthropicTool):
             return width, height
         except requests.exceptions.RequestException as e:
             raise ToolError(f"An error occurred while trying to get screen size: {str(e)}")
+
+    def list_windows(self) -> ToolResult:
+        """List all open windows with their titles and positions."""
+        try:
+            response = requests.get(
+                "http://localhost:5000/windows/list",
+                timeout=10
+            )
+            if response.status_code != 200:
+                error_msg = response.json().get('error', 'Unknown error')
+                raise ToolError(f"Failed to list windows: {error_msg}")
+
+            windows = response.json().get('windows', [])
+            if not windows:
+                return ToolResult(output="No windows found")
+
+            # Format output as readable list
+            output_lines = ["Open windows:"]
+            for i, w in enumerate(windows, 1):
+                active_marker = " [ACTIVE]" if w.get('active', False) else ""
+                output_lines.append(f"{i}. {w['title']}{active_marker}")
+
+            return ToolResult(output="\n".join(output_lines))
+        except requests.exceptions.RequestException as e:
+            raise ToolError(f"Failed to list windows: {str(e)}")
+
+    def get_active_window(self) -> ToolResult:
+        """Get the currently active (focused) window."""
+        try:
+            response = requests.get(
+                "http://localhost:5000/windows/active",
+                timeout=10
+            )
+            if response.status_code == 404:
+                return ToolResult(output="No active window found")
+            if response.status_code != 200:
+                error_msg = response.json().get('error', 'Unknown error')
+                raise ToolError(f"Failed to get active window: {error_msg}")
+
+            window = response.json()
+            return ToolResult(output=f"Active window: {window['title']}")
+        except requests.exceptions.RequestException as e:
+            raise ToolError(f"Failed to get active window: {str(e)}")
+
+    def focus_window(self, title: str) -> ToolResult:
+        """Focus (activate) a window by partial title match."""
+        try:
+            response = requests.post(
+                "http://localhost:5000/windows/focus",
+                headers={'Content-Type': 'application/json'},
+                json={"title": title},
+                timeout=10
+            )
+            if response.status_code == 404:
+                return ToolResult(error=f"No window found matching: {title}")
+            if response.status_code != 200:
+                error_msg = response.json().get('error', 'Unknown error')
+                raise ToolError(f"Failed to focus window: {error_msg}")
+
+            result = response.json()
+            focused_title = result.get('title', title)
+            return ToolResult(output=f"Focused window: {focused_title}")
+        except requests.exceptions.RequestException as e:
+            raise ToolError(f"Failed to focus window: {str(e)}")

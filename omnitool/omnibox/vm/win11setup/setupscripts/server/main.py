@@ -79,7 +79,7 @@ def execute_command():
         return execute_impl(data)
 
 @app.route('/screenshot', methods=['GET'])
-def capture_screen_with_cursor():    
+def capture_screen_with_cursor():
     cursor_path = os.path.join(os.path.dirname(__file__), "cursor.png")
     screenshot = pyautogui.screenshot()
     cursor_x, cursor_y = pyautogui.position()
@@ -93,6 +93,91 @@ def capture_screen_with_cursor():
     screenshot.save(img_io, 'PNG')
     img_io.seek(0)
     return send_file(img_io, mimetype='image/png')
+
+@app.route('/windows/list', methods=['GET'])
+def list_windows():
+    """List all open windows with their titles and positions."""
+    try:
+        import pyautogui
+        windows = pyautogui.getAllWindows()
+        window_list = []
+        for w in windows:
+            try:
+                window_list.append({
+                    'title': w.title,
+                    'left': w.left,
+                    'top': w.top,
+                    'width': w.width,
+                    'height': w.height,
+                    'active': w.isActive
+                })
+            except Exception as e:
+                # Skip windows that can't be accessed
+                logger.debug(f"Skipping window due to error: {e}")
+                continue
+        return jsonify({'windows': window_list})
+    except Exception as e:
+        logger.error("\n" + traceback.format_exc() + "\n")
+        return jsonify({'error': 'Window management not supported', 'message': str(e)}), 501
+
+@app.route('/windows/active', methods=['GET'])
+def get_active_window():
+    """Get the currently active (focused) window."""
+    try:
+        import pyautogui
+        active_window = pyautogui.getActiveWindow()
+        if active_window:
+            return jsonify({
+                'title': active_window.title,
+                'left': active_window.left,
+                'top': active_window.top,
+                'width': active_window.width,
+                'height': active_window.height
+            })
+        else:
+            return jsonify({'error': 'No active window found'}), 404
+    except Exception as e:
+        logger.error("\n" + traceback.format_exc() + "\n")
+        return jsonify({'error': 'Could not get active window', 'message': str(e)}), 500
+
+@app.route('/windows/focus', methods=['POST'])
+def focus_window():
+    """Focus (activate) a window by partial title match."""
+    try:
+        import pyautogui
+        data = request.json
+        title_query = data.get('title', '')
+
+        if not title_query:
+            return jsonify({'error': 'Title parameter is required'}), 400
+
+        # Try to find window by partial title match
+        windows = pyautogui.getWindowsWithTitle(title_query)
+
+        if windows:
+            # Focus the first matching window
+            windows[0].activate()
+            return jsonify({
+                'status': 'success',
+                'message': f'Focused window: {windows[0].title}',
+                'title': windows[0].title
+            })
+        else:
+            # If no exact match, try case-insensitive partial match
+            all_windows = pyautogui.getAllWindows()
+            for w in all_windows:
+                if title_query.lower() in w.title.lower():
+                    w.activate()
+                    return jsonify({
+                        'status': 'success',
+                        'message': f'Focused window: {w.title}',
+                        'title': w.title
+                    })
+
+            return jsonify({'error': f'No window found matching: {title_query}'}), 404
+    except Exception as e:
+        logger.error("\n" + traceback.format_exc() + "\n")
+        return jsonify({'error': 'Could not focus window', 'message': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host="10.0.2.15", port=args.port)
