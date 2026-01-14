@@ -61,12 +61,20 @@ Coordinates: normalized [0-1] in API, pixels internally.
 
 - Python 3.10+ (3.12 recommended)
 - venv-based setup via `./install.sh`
-- GPU optional (CUDA auto-detected), CPU works slower
+- GPU optional:
+  - **CUDA** (NVIDIA GPUs) - auto-detected, best performance
+  - **MPS** (Apple Silicon M1/M2/M3) - auto-detected, native NPU acceleration
+  - **CPU** - fallback, slower
 - Docker required for OmniBox VM
 
 ## Security & Platform Limitations
 
 ### Security Considerations
+
+- **Gradio limitations in secured environments**
+  - Gradio makes external calls to gradio.app servers (version checking)
+  - Cannot be fully disabled, creates issues in air-gapped/corporate networks
+  - **For secured environments**: See [`docs/FRONTEND_BACKEND_ARCHITECTURE.md`](docs/FRONTEND_BACKEND_ARCHITECTURE.md) for Node.js-based frontend migration plan
 
 - **Gradio public tunneling disabled by default** (`share=False`)
   - Only enable `share=True` in controlled development environments
@@ -104,6 +112,7 @@ Coordinates: normalized [0-1] in API, pixels internally.
 | Common errors & solutions | [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) |
 | Window management & multi-app automation | [`docs/WINDOW_MANAGEMENT.md`](docs/WINDOW_MANAGEMENT.md) |
 | Local LLM setup (Ollama, Hugging Face) | [`docs/LOCAL_LLM.md`](docs/LOCAL_LLM.md) |
+| Frontend/backend separation (Node.js migration) | [`docs/FRONTEND_BACKEND_ARCHITECTURE.md`](docs/FRONTEND_BACKEND_ARCHITECTURE.md) |
 
 ## Commit Convention
 
