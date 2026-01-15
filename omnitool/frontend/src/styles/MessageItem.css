@@ -1,0 +1,123 @@
+.message {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  animation: messageIn 0.2s ease;
+}
+
+@keyframes messageIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+}
+
+.message-sender {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.message-time {
+  color: var(--text-tertiary);
+}
+
+.message-content {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.message-content p {
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Message type styles */
+.message-user {
+  background-color: var(--primary-color);
+  color: white;
+  align-self: flex-end;
+  max-width: 80%;
+}
+
+.message-user .message-time {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.message-agent {
+  background-color: var(--bg-tertiary);
+  align-self: flex-start;
+  max-width: 90%;
+}
+
+.message-tool {
+  background-color: #f0f9ff;
+  border-left: 3px solid #3b82f6;
+  align-self: flex-start;
+  max-width: 90%;
+}
+
+@media (prefers-color-scheme: dark) {
+  .message-tool {
+    background-color: #1e3a5f;
+  }
+}
+
+.message-system {
+  background-color: #fff7ed;
+  border-left: 3px solid #f59e0b;
+  align-self: center;
+  max-width: 90%;
+  text-align: center;
+  font-style: italic;
+}
+
+@media (prefers-color-scheme: dark) {
+  .message-system {
+    background-color: #4a2c0f;
+  }
+}
+
+/* HTML content styles (screenshots, etc.) */
+.message-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+  margin-top: var(--spacing-sm);
+}
+
+.message-content details {
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-sm);
+}
+
+.message-content summary {
+  cursor: pointer;
+  font-weight: 500;
+  user-select: none;
+}
+
+.message-content pre {
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  font-size: 0.8125rem;
+}

@@ -1,0 +1,31 @@
+.vnc-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.vnc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.vnc-header h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.vnc-viewer {
+  flex: 1;
+  overflow: hidden;
+  background-color: #000;
+}
+
+.vnc-viewer iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
