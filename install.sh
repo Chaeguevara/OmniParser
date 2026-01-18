@@ -73,14 +73,28 @@ echo -e "  Activated: ${GREEN}$(which python)${NC}"
 pip install --upgrade pip --quiet
 
 # -----------------------------------------------------------------------------
-# 3. Detect CUDA and Install PyTorch
+# 3. Detect GPU and Install PyTorch
 # -----------------------------------------------------------------------------
 echo ""
 echo -e "${YELLOW}[3/6] Detecting GPU and installing PyTorch...${NC}"
 
 CUDA_AVAILABLE=false
+MPS_AVAILABLE=false
 CUDA_VERSION=""
 
+# Detect Apple Silicon (M1/M2/M3)
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    ARCH=$(uname -m)
+    if [[ "$ARCH" == "arm64" ]]; then
+        MPS_AVAILABLE=true
+        echo -e "  Platform: ${GREEN}Apple Silicon ($ARCH)${NC}"
+        echo -e "  MPS (Metal Performance Shaders): ${GREEN}supported${NC}"
+    else
+        echo -e "  Platform: ${YELLOW}macOS Intel${NC}"
+    fi
+fi
+
+# Detect NVIDIA CUDA
 if command -v nvidia-smi &> /dev/null; then
     CUDA_AVAILABLE=true
     # Extract CUDA version from nvidia-smi
@@ -97,19 +111,40 @@ if command -v nvidia-smi &> /dev/null; then
     fi
 fi
 
+# Install PyTorch based on platform
 if [ "$CUDA_AVAILABLE" = true ]; then
-    echo -e "  Installing PyTorch with ${GREEN}CUDA support${NC}..."
-    # Install PyTorch with CUDA 12.1 (widely compatible)
+    echo -e "  Installing PyTorch with ${GREEN}CUDA 12.1 support${NC}..."
     pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121 --quiet
+elif [ "$MPS_AVAILABLE" = true ]; then
+    echo -e "  Installing PyTorch with ${GREEN}MPS (Apple Silicon NPU) support${NC}..."
+    # Install default PyPI version (native ARM build with MPS support)
+    pip install torch torchvision --quiet
 else
-    echo -e "  No NVIDIA GPU detected. Installing ${YELLOW}CPU-only${NC} PyTorch..."
+    echo -e "  No GPU detected. Installing ${YELLOW}CPU-only${NC} PyTorch..."
     pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu --quiet
 fi
 
 # Verify PyTorch installation
 TORCH_VERSION=$(python -c "import torch; print(torch.__version__)")
-CUDA_TORCH=$(python -c "import torch; print('CUDA' if torch.cuda.is_available() else 'CPU')")
-echo -e "  PyTorch version: ${GREEN}$TORCH_VERSION${NC} ($CUDA_TORCH)"
+
+# Check what acceleration is available
+python -c "
+import torch
+backends = []
+if torch.cuda.is_available():
+    backends.append('CUDA')
+if hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+    backends.append('MPS')
+if not backends:
+    backends.append('CPU')
+print(' + '.join(backends))
+" > /tmp/torch_backends.txt
+
+TORCH_BACKENDS=$(cat /tmp/torch_backends.txt)
+rm -f /tmp/torch_backends.txt
+
+echo -e "  PyTorch version: ${GREEN}$TORCH_VERSION${NC}"
+echo -e "  Available backends: ${GREEN}$TORCH_BACKENDS${NC}"
 
 # -----------------------------------------------------------------------------
 # 4. Install Requirements
@@ -138,6 +173,7 @@ pip install \
     "pytest==8.3.3" \
     "pytest-asyncio==0.23.6" \
     "pyautogui==0.9.54" \
+    "PyGetWindow>=0.0.9" \
     "streamlit>=1.38.0" \
     "anthropic[bedrock,vertex]>=0.37.1" \
     "jsonschema==4.22.0" \

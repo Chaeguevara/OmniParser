@@ -106,6 +106,7 @@ Coordinates: normalized [0-1] in API, pixels internally.
 | Topic | File |
 |-------|------|
 | Environment setup, model download | [`docs/SETUP.md`](docs/SETUP.md) |
+| Platform-specific PyTorch installation (CUDA/MPS/CPU) | [`docs/PLATFORM_REQUIREMENTS.md`](docs/PLATFORM_REQUIREMENTS.md) |
 | REST & Python API reference | [`docs/API.md`](docs/API.md) |
 | Design patterns, conventions | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
 | Adding providers, tools, models | [`docs/EXTENDING.md`](docs/EXTENDING.md) |
