@@ -30,6 +30,11 @@ source venv/bin/activate
 python gradio_demo.py
 
 # Full stack - Option 1: React UI (RECOMMENDED for production/secured environments)
+# Automatic startup (single command):
+./start_ui.sh  # Starts both backend and frontend
+# Press Ctrl+C to stop, or run: ./stop_ui.sh
+
+# Manual startup (separate terminals):
 # Terminal 1: Backend API
 cd omnitool/backend
 uvicorn main:app --host 0.0.0.0 --port 8888 --reload
