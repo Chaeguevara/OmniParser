@@ -9,6 +9,7 @@ from anthropic.types.beta import BetaToolComputerUse20241022Param
 
 from .base import BaseAnthropicTool, ToolError, ToolResult
 from .screen_capture import get_screenshot
+from .window_manager import get_window_manager
 import requests
 import re
 
@@ -353,17 +354,11 @@ class ComputerTool(BaseAnthropicTool):
             raise ToolError(f"An error occurred while trying to get screen size: {str(e)}")
 
     def list_windows(self) -> ToolResult:
-        """List all open windows with their titles and positions."""
+        """List all open windows with their titles and positions (cross-platform)."""
         try:
-            response = requests.get(
-                "http://localhost:5000/windows/list",
-                timeout=10
-            )
-            if response.status_code != 200:
-                error_msg = response.json().get('error', 'Unknown error')
-                raise ToolError(f"Failed to list windows: {error_msg}")
+            wm = get_window_manager()
+            windows = wm.list_windows()
 
-            windows = response.json().get('windows', [])
             if not windows:
                 return ToolResult(output="No windows found")
 
@@ -371,47 +366,38 @@ class ComputerTool(BaseAnthropicTool):
             output_lines = ["Open windows:"]
             for i, w in enumerate(windows, 1):
                 active_marker = " [ACTIVE]" if w.get('active', False) else ""
-                output_lines.append(f"{i}. {w['title']}{active_marker}")
+                title = w.get('title', 'Unknown')
+                app = w.get('app', 'Unknown')
+                output_lines.append(f"{i}. {title} ({app}){active_marker}")
 
             return ToolResult(output="\n".join(output_lines))
-        except requests.exceptions.RequestException as e:
+        except Exception as e:
             raise ToolError(f"Failed to list windows: {str(e)}")
 
     def get_active_window(self) -> ToolResult:
-        """Get the currently active (focused) window."""
+        """Get the currently active (focused) window (cross-platform)."""
         try:
-            response = requests.get(
-                "http://localhost:5000/windows/active",
-                timeout=10
-            )
-            if response.status_code == 404:
-                return ToolResult(output="No active window found")
-            if response.status_code != 200:
-                error_msg = response.json().get('error', 'Unknown error')
-                raise ToolError(f"Failed to get active window: {error_msg}")
+            wm = get_window_manager()
+            window = wm.get_active_window()
 
-            window = response.json()
-            return ToolResult(output=f"Active window: {window['title']}")
-        except requests.exceptions.RequestException as e:
+            if not window:
+                return ToolResult(output="No active window found")
+
+            title = window.get('title', 'Unknown')
+            app = window.get('app', 'Unknown')
+            return ToolResult(output=f"Active window: {title} ({app})")
+        except Exception as e:
             raise ToolError(f"Failed to get active window: {str(e)}")
 
     def focus_window(self, title: str) -> ToolResult:
-        """Focus (activate) a window by partial title match."""
+        """Focus (activate) a window by partial title match (cross-platform)."""
         try:
-            response = requests.post(
-                "http://localhost:5000/windows/focus",
-                headers={'Content-Type': 'application/json'},
-                json={"title": title},
-                timeout=10
-            )
-            if response.status_code == 404:
-                return ToolResult(error=f"No window found matching: {title}")
-            if response.status_code != 200:
-                error_msg = response.json().get('error', 'Unknown error')
-                raise ToolError(f"Failed to focus window: {error_msg}")
+            wm = get_window_manager()
+            success = wm.focus_window(title)
 
-            result = response.json()
-            focused_title = result.get('title', title)
-            return ToolResult(output=f"Focused window: {focused_title}")
-        except requests.exceptions.RequestException as e:
+            if not success:
+                return ToolResult(error=f"No window found matching: {title}")
+
+            return ToolResult(output=f"Focused window matching: {title}")
+        except Exception as e:
             raise ToolError(f"Failed to focus window: {str(e)}")

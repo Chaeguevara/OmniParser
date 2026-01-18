@@ -77,7 +77,7 @@ Coordinates: normalized [0-1] in API, pixels internally.
 4. **Test with `gradio_demo.py` first** - before full stack
 5. **API keys** - never hardcode, use env vars or UI input
 6. **Security: Gradio tunneling disabled by default** - `share=False` to prevent public exposure
-7. **OS limitation: Windows-only currently** - VM requires Windows 11 Docker container
+7. **Cross-platform support** - Works natively on macOS, Windows, and Linux (Docker VM optional for advanced automation)
 
 ## Environment
 
@@ -87,7 +87,7 @@ Coordinates: normalized [0-1] in API, pixels internally.
   - **CUDA** (NVIDIA GPUs) - auto-detected, best performance
   - **MPS** (Apple Silicon M1/M2/M3) - auto-detected, native NPU acceleration
   - **CPU** - fallback, slower
-- Docker required for OmniBox VM
+- Docker optional for OmniBox VM (advanced Windows automation only)
 
 ## Security & Platform Limitations
 
@@ -115,13 +115,14 @@ Coordinates: normalized [0-1] in API, pixels internally.
 
 ### Platform Support
 
-**Current status: Windows-only**
+**Cross-platform support:**
 
-- **Full support:** Windows 11 VM (Docker-based OmniBox)
-- **Partial support:** Core parsing works cross-platform, but UI automation requires Windows VM
-- **Not supported:** Native Linux/macOS UI automation
+- **macOS (M1/M2/M3/Intel):** ✅ Full support (native AppleScript window management, MPS acceleration)
+- **Windows:** ✅ Full support (pyautogui + optional Docker VM for advanced automation)
+- **Linux (X11):** ✅ Full support (wmctrl/xdotool window management)
+- **Linux (Wayland):** ⚠️ Partial support (limited window management)
 
-**For multi-program interaction**, see [`docs/WINDOW_MANAGEMENT.md`](docs/WINDOW_MANAGEMENT.md) for cross-platform roadmap.
+**For multi-program interaction**, see [`docs/WINDOW_MANAGEMENT.md`](docs/WINDOW_MANAGEMENT.md) for cross-platform implementation details.
 
 ## Detailed Documentation
 

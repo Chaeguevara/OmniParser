@@ -1,55 +1,54 @@
-# Cross-Platform Window Management Design
+# Cross-Platform Window Management
 
 ## Current State
 
-**OmniParser is currently Windows-only** due to:
-- Windows 11 Docker VM (`omnitool/omnibox/`)
-- `uiautomation` library (Windows-specific, in requirements.txt)
-- System prompts reference Windows environment
+✅ **OmniParser now supports cross-platform window management** for:
+- **macOS**: Native AppleScript integration
+- **Windows**: pyautogui integration
+- **Linux**: wmctrl/xdotool integration
 
-## Problem: Multi-Program Interaction
+The Windows VM (`omnitool/omnibox/`) is now optional - window management works natively on your OS.
 
-Current limitations for automating interaction between two programs:
-1. ❌ Cannot detect which application is active
-2. ❌ Cannot list open windows programmatically
-3. ❌ Cannot focus/switch to specific windows by name or process
-4. ❌ No application-specific context in UI element parsing
-5. ❌ Must manually click taskbar to switch programs
+## Features
 
-## Proposed Solution: Cross-Platform Window Management API
+Window management enables automating interaction between multiple programs:
+1. ✅ Detect which application is currently active
+2. ✅ List all open windows programmatically
+3. ✅ Focus/switch to specific windows by name or process
+4. ✅ Application-specific context in UI automation
+5. ✅ Programmatic window switching (like Alt+Tab)
 
-### Platform-Specific Libraries
+## Implementation: Cross-Platform Window Management API
 
-| Platform | Library | Capabilities |
-|----------|---------|--------------|
-| **Windows** | `pygetwindow` | List windows, get titles, activate, minimize, maximize |
-| **Windows** | `win32gui` (pywin32) | Advanced window control, enumeration |
-| **Linux X11** | `python-xlib` | Window management on X11 systems |
-| **Linux Wayland** | `wlr-foreign-toplevel` | Limited support (Wayland restrictions) |
-| **macOS** | `pyobjc-framework-Quartz` | Window enumeration via Accessibility API |
-| **Cross-platform** | `pyautogui` | Already used! Has `getWindowsWithTitle()` |
+### Platform-Specific Implementations
 
-### Recommended Approach: Tiered Implementation
+| Platform | Implementation | Requirements | Status |
+|----------|----------------|--------------|--------|
+| **macOS** | AppleScript | Built-in (no dependencies) | ✅ Native |
+| **Windows** | pyautogui | `pip install pyautogui` | ✅ Native |
+| **Linux (X11)** | wmctrl + xdotool | `sudo apt install wmctrl xdotool` | ✅ Native |
+| **Linux (Wayland)** | Limited | - | ⚠️ Partial |
+
+### Implementation
+
+The cross-platform implementation is in `omnitool/gradio/tools/window_manager.py`:
 
 ```python
-# Tier 1: Use pyautogui (already in requirements)
-import pyautogui
+from omnitool.gradio.tools.window_manager import get_window_manager
 
-# Works on Windows, macOS, Linux (X11)
-windows = pyautogui.getWindowsWithTitle('Chrome')
-if windows:
-    windows[0].activate()  # Bring to front
+# Get window manager (auto-detects platform)
+wm = get_window_manager()
 
-# Tier 2: Platform-specific enhancements
-if platform.system() == 'Windows':
-    import pygetwindow as gw
-    all_windows = gw.getAllWindows()
-elif platform.system() == 'Linux':
-    # Use wmctrl or xdotool via subprocess
-    pass
-elif platform.system() == 'Darwin':  # macOS
-    # Use AppleScript or Quartz
-    pass
+# List all windows
+windows = wm.list_windows()
+# Returns: [{"title": str, "app": str, "pid": int, "active": bool}, ...]
+
+# Get active window
+active = wm.get_active_window()
+# Returns: {"title": str, "app": str, "pid": int, "active": True}
+
+# Focus window by title (partial match, case-insensitive)
+success = wm.focus_window("Chrome")  # Brings Chrome to front
 ```
 
 ## API Design
