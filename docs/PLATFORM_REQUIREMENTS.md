@@ -4,11 +4,13 @@ OmniParser supports three acceleration backends: **CUDA (NVIDIA)**, **MPS (Apple
 
 ## Supported Platforms
 
-| Platform | Acceleration | PyTorch Version | VRAM/RAM | Speed |
-|----------|--------------|-----------------|----------|-------|
-| **NVIDIA GPU** | CUDA | `cu121` (CUDA 12.1) | 4-12GB VRAM | ⭐⭐⭐⭐⭐ Fastest |
-| **Apple Silicon (M1/M2/M3)** | MPS | Default (ARM native) | 8-16GB Unified Memory | ⭐⭐⭐⭐ Fast |
-| **Intel/AMD CPU** | CPU-only | `cpu` (optimized) | 8GB+ RAM | ⭐⭐ Slower |
+| Platform | Acceleration | PyTorch Version | Dtype | VRAM/RAM | Speed |
+|----------|--------------|-----------------|-------|----------|-------|
+| **NVIDIA GPU** | CUDA | `cu121` (CUDA 12.1) | float16 | 4-12GB VRAM | ⭐⭐⭐⭐⭐ Fastest |
+| **Apple Silicon (M1/M2/M3)** | MPS | Default (ARM native) | float32* | 8-16GB Unified Memory | ⭐⭐⭐⭐ Fast |
+| **Intel/AMD CPU** | CPU-only | `cpu` (optimized) | float32 | 8GB+ RAM | ⭐⭐ Slower |
+
+*Note: MPS uses float32 instead of float16 due to incomplete float16 support in certain operations (conv2d, etc.). Still faster than CPU.
 
 ## Automatic Installation
 
@@ -148,7 +150,14 @@ Tested on OmniParser parsing a 1920x1080 screenshot:
 - Close other applications
 - Restart Mac to clear memory
 
-**"MPS backend error"**
+**"MPS backend error" or "Input type (float) and bias type (c10::Half) should be the same"**
+- This is a dtype mismatch error
+- **Root cause:** MPS has incomplete float16 support for certain operations (like conv2d)
+- **Solution:** OmniParser automatically uses float32 for MPS (fixed in util/utils.py)
+- **Performance:** Still faster than CPU, just uses more memory
+- **Note:** CUDA can use float16 for better performance, but MPS requires float32
+
+**"MPS backend error" (other)**
 - Some operations not supported on MPS
 - Falls back to CPU automatically
 - Check PyTorch version: `python -c "import torch; print(torch.__version__)"` (need 2.0+)

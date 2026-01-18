@@ -63,12 +63,13 @@ def get_caption_model_processor(model_name, model_name_or_path="Salesforce/blip2
     if model_name == "blip2":
         from transformers import Blip2Processor, Blip2ForConditionalGeneration
         processor = Blip2Processor.from_pretrained("Salesforce/blip2-opt-2.7b")
-        if device == 'cpu':
+        if device == 'cpu' or device == 'mps':
+            # Use float32 for CPU and MPS (MPS has incomplete float16 support)
             model = Blip2ForConditionalGeneration.from_pretrained(
             model_name_or_path, device_map=None, torch_dtype=torch.float32
         )
         else:
-            # Use float16 for CUDA and MPS (Apple Silicon NPU)
+            # Use float16 for CUDA only
             model = Blip2ForConditionalGeneration.from_pretrained(
             model_name_or_path, device_map=None, torch_dtype=torch.float16
         ).to(device)
@@ -76,10 +77,11 @@ def get_caption_model_processor(model_name, model_name_or_path="Salesforce/blip2
         from transformers import AutoProcessor, AutoModelForCausalLM
         processor = AutoProcessor.from_pretrained("microsoft/Florence-2-base", trust_remote_code=True)
         # attn_implementation="eager" fixes compatibility with newer transformers versions
-        if device == 'cpu':
+        if device == 'cpu' or device == 'mps':
+            # Use float32 for CPU and MPS (MPS has incomplete float16 support)
             model = AutoModelForCausalLM.from_pretrained(model_name_or_path, torch_dtype=torch.float32, trust_remote_code=True, attn_implementation="eager")
         else:
-            # Use float16 for CUDA and MPS (Apple Silicon NPU)
+            # Use float16 for CUDA only
             model = AutoModelForCausalLM.from_pretrained(model_name_or_path, torch_dtype=torch.float16, trust_remote_code=True, attn_implementation="eager").to(device)
     return {'model': model.to(device), 'processor': processor}
 
