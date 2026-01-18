@@ -7,6 +7,8 @@ This document summarizes the major features and improvements implemented on bran
 ## Commits
 
 ```
+f0ee187 feat(cross-platform): Add native macOS/Linux support for window management
+4dbdcd5 feat(scripts): Add one-command startup scripts for React UI
 d201314 chore(deps): Add FastAPI backend dependencies and update docs
 e988aa7 fix(mps): Use float32 for MPS instead of float16 to fix dtype mismatch
 729f94a fix(install): Add platform-specific PyTorch installation for CUDA/MPS/CPU
@@ -19,6 +21,37 @@ f73e2e3 feat(window-management): Add cross-platform window management for multi-
 ```
 
 ## Major Features Implemented
+
+### 0. Cross-Platform Window Management (BREAKING)
+
+**Motivation**: Original implementation required Windows VM for window management, blocking native macOS/Linux usage.
+
+**Implementation**:
+- `omnitool/gradio/tools/window_manager.py` - Cross-platform window manager
+  - **macOS**: AppleScript integration (zero dependencies)
+  - **Windows**: pyautogui integration
+  - **Linux**: wmctrl/xdotool integration
+
+**Changes**:
+- Replaced HTTP requests to Windows VM Flask server with native OS calls
+- Window management now works natively on macOS, Windows, Linux
+- Windows VM is now optional (only for advanced automation scenarios)
+- Fixed line endings in startup scripts (CRLF → LF for macOS compatibility)
+
+**Platform Support**:
+- ✅ macOS (M1/M2/M3/Intel) - Native AppleScript, MPS acceleration
+- ✅ Windows - pyautogui, optional Docker VM
+- ✅ Linux (X11) - wmctrl/xdotool
+- ⚠️ Linux (Wayland) - Partial support
+
+**Actions**:
+- `list_windows()` - List all open windows
+- `get_active_window()` - Get currently focused window
+- `focus_window(title)` - Focus window by partial title match
+
+**Documentation**:
+- `docs/WINDOW_MANAGEMENT.md` - Updated with cross-platform implementation
+- `CLAUDE.md` - Updated to reflect macOS/Linux support
 
 ### 1. React + FastAPI Architecture (31 files)
 
@@ -43,6 +76,11 @@ f73e2e3 feat(window-management): Add cross-platform window management for multi-
 
 **Quick Start**:
 ```bash
+# One-command startup (recommended)
+./start_ui.sh  # Starts both backend and frontend
+# Press Ctrl+C to stop, or run: ./stop_ui.sh
+
+# Manual startup (alternative):
 # Terminal 1: Backend
 cd omnitool/backend
 uvicorn main:app --host 0.0.0.0 --port 8888 --reload
@@ -52,6 +90,11 @@ cd omnitool/frontend
 npm install
 npm run dev  # http://localhost:5173
 ```
+
+**Startup Scripts**:
+- `start_ui.sh` - One-command startup (checks prerequisites, installs deps, starts both)
+- `stop_ui.sh` - Graceful shutdown
+- `UI_QUICKSTART.md` - Complete quick start guide
 
 ### 2. Apple Silicon NPU (MPS) Support
 
