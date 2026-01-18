@@ -31,3 +31,6 @@ screeninfo
 uiautomation
 dashscope
 groq
+fastapi>=0.104.1
+uvicorn[standard]>=0.24.0
+websockets>=12.0

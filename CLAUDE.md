@@ -8,8 +8,10 @@
 |------|---------|
 | `util/omniparser.py` | Main API class |
 | `util/utils.py` | Core detection/OCR/captioning (600+ lines) |
-| `omnitool/omniparserserver/` | FastAPI REST server |
-| `omnitool/gradio/app.py` | Full Gradio UI |
+| `omnitool/backend/` | **FastAPI backend (REST + WebSocket)** |
+| `omnitool/frontend/` | **React frontend (Vite + WebSocket)** |
+| `omnitool/omniparserserver/` | Legacy parser REST server |
+| `omnitool/gradio/app.py` | Legacy Gradio UI (development only) |
 | `omnitool/gradio/loop.py` | Agent orchestration loop |
 | `omnitool/gradio/agent/` | LLM agents (Claude, GPT, etc.) |
 | `omnitool/gradio/tools/computer.py` | Mouse/keyboard control |
@@ -27,9 +29,24 @@ source venv/bin/activate
 # Simple demo
 python gradio_demo.py
 
-# Full stack (3 terminals)
+# Full stack - Option 1: React UI (RECOMMENDED for production/secured environments)
+# Terminal 1: Backend API
+cd omnitool/backend
+uvicorn main:app --host 0.0.0.0 --port 8888 --reload
+
+# Terminal 2: Frontend (requires Node.js)
+cd omnitool/frontend
+npm install
+npm run dev  # http://localhost:5173
+
+# Full stack - Option 2: Gradio UI (legacy, development only)
+# Terminal 1: Parser server
 cd omnitool/omniparserserver && python -m omniparserserver
+
+# Terminal 2: Windows VM (optional, for UI automation)
 cd omnitool/omnibox/scripts && ./manage_vm.sh start
+
+# Terminal 3: Gradio UI
 cd omnitool/gradio && python app.py
 ```
 
