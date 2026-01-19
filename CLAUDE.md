@@ -14,8 +14,8 @@
 | `omnitool/gradio/app.py` | Legacy Gradio UI (development only) |
 | `omnitool/gradio/loop.py` | Agent orchestration loop |
 | `omnitool/gradio/agent/` | LLM agents (Claude, GPT, etc.) |
-| `omnitool/gradio/tools/computer.py` | Mouse/keyboard control |
-| `omnitool/omnibox/` | Windows 11 VM (Docker) |
+| `omnitool/gradio/tools/computer.py` | Mouse/keyboard/screenshot control (native on Mac) |
+| `omnitool/omnibox/` | Windows 11 VM (Docker, optional for advanced automation) |
 | `weights/` | Model checkpoints (**never commit**) |
 | `gradio_demo.py` | Simple standalone demo |
 
